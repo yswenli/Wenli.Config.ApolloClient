@@ -15,11 +15,8 @@
 *版 本 号： V1.0.0.0
 *描    述：
 *****************************************************************************/
-using Wenli.Config.ApolloClient;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Wenli.Config.ApolloClient.Model;
 
 namespace Wenli.Config.ApolloClient
