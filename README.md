@@ -14,7 +14,7 @@ Wenli.Config.ApolloClient 是根据了解官方驱动流程后，结合项目实
 
  4.增加更加详细的配置，以适应不同项目环境的需求，比如长轮询时间、次数等 5.根据实际情况修改配置读取顺序为：优先使用appsetting中的配置、其次使用apolloclient本地配置，最后使用apolloservice的配置
 
-测试代码如下
+Demo 如下
 ```CSharp
 using System;
 using System.Collections.Generic;
