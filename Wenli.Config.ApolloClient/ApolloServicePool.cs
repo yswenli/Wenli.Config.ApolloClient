@@ -17,6 +17,7 @@
 *****************************************************************************/
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Wenli.Config.ApolloClient.Core;
 using Wenli.Config.ApolloClient.Model;
 
@@ -69,6 +70,27 @@ namespace Wenli.Config.ApolloClient
         public static bool GenerateClass(ApolloConfig apolloConfig, string nameSpace, string filePath, out string err)
         {
             return ApolloService.GenerateClass(apolloConfig, nameSpace, filePath, out err);
+        }
+
+        /// <summary>
+        /// 获取AppIds
+        /// </summary>
+        /// <param name="apolloConfig"></param>
+        /// <returns></returns>
+        public static string[] GetAppIds(ApolloConfig apolloConfig)
+        {
+            return _cache[apolloConfig.ServerUrl + apolloConfig.AppIDs].GetAppIds();
+        }
+
+        /// <summary>
+        /// 获取配置中的全部keys
+        /// </summary>
+        /// <param name="apolloConfig"></param>
+        /// <param name="appID"></param>
+        /// <returns></returns>
+        public static string[] GetConfigKeys(ApolloConfig apolloConfig, string appID)
+        {
+            return _cache[apolloConfig.ServerUrl + apolloConfig.AppIDs][appID].Keys.ToArray();
         }
 
         /// <summary>
