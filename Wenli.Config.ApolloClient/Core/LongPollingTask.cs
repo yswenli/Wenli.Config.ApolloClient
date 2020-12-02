@@ -1,0 +1,141 @@
+﻿/****************************************************************************
+*项目名称：Wenli.Config.ApolloClient.Base
+*CLR 版本：4.0.30319.42000
+*机器名称：WENLI-PC
+*命名空间：Wenli.Config.ApolloClient.Base
+*类 名 称：LongPollingTask
+*版 本 号：V1.0.0.0
+*创建人： yswenli
+*电子邮箱：wenguoli_520@qq.com
+*创建时间：2019/1/8 16:41:25
+*描述：
+*=====================================================================
+*修改时间：2019/1/8 16:41:25
+*修 改 人： yswenli
+*版 本 号： V1.0.0.0
+*描    述：
+*****************************************************************************/
+using Wenli.Config.ApolloClient.Common;
+using Wenli.Config.ApolloClient.Model;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Wenli.Config.ApolloClient.Core
+{
+    /// <summary>
+    /// 长轮询通知任务
+    /// </summary>
+    class LongPollingTask
+    {
+        bool start = false;
+
+        ApolloConfig _apolloConfig;
+
+        ServiceConfigs _serviceConfigs;
+
+        HttpHelper _httpHelper;
+
+        GetConfigTask _getConfigTask;
+
+        long _notificationId = -1;
+
+        /// <summary>
+        /// 长轮询通知任务
+        /// </summary>
+        /// <param name="apolloConfig"></param>
+        /// <param name="serviceConfigs"></param>
+        public LongPollingTask(ApolloConfig apolloConfig, ServiceConfigs serviceConfigs)
+        {
+            _apolloConfig = apolloConfig;
+
+            _serviceConfigs = serviceConfigs;
+
+            _httpHelper = new HttpHelper(_apolloConfig.Timeout, _apolloConfig.ReadTimeout);
+
+            _getConfigTask = new GetConfigTask(apolloConfig);
+        }
+
+        /// <summary>
+        /// 长轮询
+        /// </summary>
+        /// <param name="appIDs"></param>
+        /// <param name="cluster"></param>
+        public void Loop(string[] appIDs, string cluster = "default")
+        {
+            start = true;
+
+            while (start)
+            {
+                Start(appIDs, cluster);
+
+                Thread.Sleep(10);
+            }
+        }
+
+        /// <summary>
+        /// 启动长轮询
+        /// </summary>
+        /// <param name="appIDs"></param>
+        /// <param name="cluster"></param>
+        public void Start(string[] appIDs, string cluster = "default")
+        {
+            List<Task> tasks = new List<Task>();
+
+            foreach (var serviceConfig in _serviceConfigs)
+            {
+                foreach (var appID in appIDs)
+                {
+                    var url = TaskUrlHelper.GetLongPollingUrl(serviceConfig.HomePageUrl, appID, cluster, _notificationId);
+
+                    var task = Task.Factory.StartNew(() =>
+                    {
+                        for (int i = 0; i < _apolloConfig.MaxRetries; i++)
+                        {
+                            var response = _httpHelper.DoGet<LongPollings>(new HttpRequest(url, 600 * 1000));
+
+                            if (response.StatusCode == 200 && response.Body != null)
+                            {
+                                _getConfigTask.GetConfig(appIDs, serviceConfig, out cluster);
+
+                                var res = response.Body.FirstOrDefault();
+
+                                if (res != null)
+                                {
+                                    _notificationId = res.NotificationId;
+                                }
+
+                                break;
+                            }
+                            else if (response.StatusCode == 304)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                throw new ApolloConfigException($"apollo轮询配置中心出现异常，response.StatusCode:{response.StatusCode}");
+                            }
+
+                        }
+                    });
+
+                    tasks.Add(task);
+                }
+            }
+
+            if (tasks.Count > 0)
+
+                Task.WaitAll(tasks.ToArray());
+        }
+        
+        /// <summary>
+        /// 停止长轮询
+        /// </summary>
+        public void Stop()
+        {
+            start = false;
+        }
+
+    }
+}
