@@ -18,8 +18,8 @@ namespace Wenli.Config.ApolloClient.Test
 
             var apolloConfig = new ApolloConfigBuilder()
                 .SetEnv("UAT")
-                .SetApolloServerUrl(new Uri("http://uat.ecm.em/"))
-                .SetAppIDs("pointcpf_supplier")
+                .SetApolloServerUrl(new Uri("http://127.0.0.1:8080/"))
+                .SetAppIDs("myfirstweb")
                 .Build();
 
             ApolloServicePool.OnError += ApolloServicePool_OnError;
