@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 namespace Wenli.Config.ApolloClient.Core
 {
@@ -29,7 +30,7 @@ namespace Wenli.Config.ApolloClient.Core
     /// </summary>
     class LongPollingTask
     {
-        bool start = false;
+        bool _start = false;
 
         ApolloConfig _apolloConfig;
 
@@ -37,7 +38,7 @@ namespace Wenli.Config.ApolloClient.Core
 
         HttpHelper _httpHelper;
 
-        GetConfigTask _getConfigTask;
+        ApolloServiceConfigTask _getConfigTask;
 
         long _notificationId = -1;
 
@@ -54,7 +55,7 @@ namespace Wenli.Config.ApolloClient.Core
 
             _httpHelper = new HttpHelper(_apolloConfig.Timeout, _apolloConfig.ReadTimeout);
 
-            _getConfigTask = new GetConfigTask(apolloConfig);
+            _getConfigTask = new ApolloServiceConfigTask(apolloConfig);
         }
 
         /// <summary>
@@ -62,15 +63,22 @@ namespace Wenli.Config.ApolloClient.Core
         /// </summary>
         /// <param name="appIDs"></param>
         /// <param name="cluster"></param>
-        public void Loop(string[] appIDs, string cluster = "default")
+        public void Start(string[] appIDs, string cluster = "default")
         {
-            start = true;
-
-            while (start)
+            if (!_start)
             {
-                Start(appIDs, cluster);
+                _start = true;
 
-                Thread.Sleep(10);
+                Task.Factory.StartNew(() =>
+                {
+                    while (_start)
+                    {
+                        GetApolloConfigs(appIDs, cluster);
+
+                        Thread.Sleep(10);
+                    }
+
+                }, TaskCreationOptions.LongRunning);
             }
         }
 
@@ -79,7 +87,7 @@ namespace Wenli.Config.ApolloClient.Core
         /// </summary>
         /// <param name="appIDs"></param>
         /// <param name="cluster"></param>
-        public void Start(string[] appIDs, string cluster = "default")
+        void GetApolloConfigs(string[] appIDs, string cluster = "default")
         {
             List<Task> tasks = new List<Task>();
 
@@ -114,9 +122,9 @@ namespace Wenli.Config.ApolloClient.Core
                             }
                             else
                             {
+                                Console.WriteLine($"apollo轮询配置中心出现异常，response.StatusCode:{response.StatusCode}");
                                 throw new ApolloConfigException($"apollo轮询配置中心出现异常，response.StatusCode:{response.StatusCode}");
                             }
-
                         }
                     });
 
@@ -128,13 +136,13 @@ namespace Wenli.Config.ApolloClient.Core
 
                 Task.WaitAll(tasks.ToArray());
         }
-        
+
         /// <summary>
         /// 停止长轮询
         /// </summary>
         public void Stop()
         {
-            start = false;
+            _start = false;
         }
 
     }

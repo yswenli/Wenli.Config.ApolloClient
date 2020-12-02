@@ -46,7 +46,7 @@ namespace Wenli.Config.ApolloClient.Core
 
         ConfigConfirmTask _configConfirmTask;
 
-        GetConfigTask _getConfigTask;
+        ApolloServiceConfigTask _apolloServiceConfigTask;
 
         LongPollingTask _longPollingTask;
 
@@ -78,33 +78,6 @@ namespace Wenli.Config.ApolloClient.Core
             }
         }
 
-        /// <summary>
-        /// 初始化
-        /// </summary>
-        void Init()
-        {
-            _configConfirmTask = new ConfigConfirmTask(Config);
-
-            var serviceConfigs = _configConfirmTask.GetServices();
-
-            if (serviceConfigs != null && serviceConfigs.Any())
-            {
-                _getConfigTask = new GetConfigTask(Config);
-
-                foreach (var serviceConfig in serviceConfigs)
-                {
-                    _getConfigTask.GetConfig(_appIDs, serviceConfig, out _cluster);
-                }
-            }
-            else
-            {
-                throw new Exception("Wenli.Config.ApolloClient _configConfirmTask.GetServices 获取配置服务 is Null or Empty!");
-            }
-
-            _longPollingTask = new LongPollingTask(Config, serviceConfigs);
-
-            _longPollingTask.Start(_appIDs, _cluster);
-        }
 
         /// <summary>
         /// 获取AppIds
@@ -159,21 +132,32 @@ namespace Wenli.Config.ApolloClient.Core
         /// </summary>
         public void Start()
         {
-            StartFunc();
-
-            Task.Factory.StartNew(() =>
-            {
-                _longPollingTask.Loop(_appIDs, _cluster);
-            });
-        }
-
-        void StartFunc()
-        {
             try
             {
                 if (_longPollingTask == null)
+                {
+                    _configConfirmTask = new ConfigConfirmTask(Config);
 
-                    Init();
+                    var serviceConfigs = _configConfirmTask.GetServices();
+
+                    if (serviceConfigs != null && serviceConfigs.Any())
+                    {
+                        _apolloServiceConfigTask = new ApolloServiceConfigTask(Config);
+
+                        foreach (var serviceConfig in serviceConfigs)
+                        {
+                            _apolloServiceConfigTask.GetConfig(_appIDs, serviceConfig, out _cluster);
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Wenli.Config.ApolloClient _configConfirmTask.GetServices 获取配置服务 is Null or Empty!");
+                    }
+
+                    _longPollingTask = new LongPollingTask(Config, serviceConfigs);
+
+                    _longPollingTask.Start(_appIDs, _cluster);
+                }
             }
             catch (Exception ex)
             {
@@ -181,7 +165,7 @@ namespace Wenli.Config.ApolloClient.Core
 
                 Thread.Sleep(10 * 1000);
 
-                StartFunc();
+                Start();
             }
         }
 

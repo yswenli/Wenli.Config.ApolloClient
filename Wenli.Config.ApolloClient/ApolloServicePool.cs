@@ -43,13 +43,14 @@ namespace Wenli.Config.ApolloClient
         {
             try
             {
-                if (!_cache.ContainsKey(apolloConfig.ServerUrl + apolloConfig.AppIDs))
+                var uniqueId = apolloConfig.ServerUrl + apolloConfig.AppIDs;
+
+                if (!_cache.ContainsKey(uniqueId))
                 {
                     var service = new ApolloService(apolloConfig);
                     service.OnError += Service_OnError;
                     service.Start();
-
-                    _cache.TryAdd(apolloConfig.ServerUrl + apolloConfig.AppIDs, service);
+                    _cache.TryAdd(uniqueId, service);
                 }
             }
             catch (Exception ex)

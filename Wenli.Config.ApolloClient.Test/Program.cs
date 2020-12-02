@@ -17,7 +17,8 @@ namespace Wenli.Config.ApolloClient.Test
             Console.WriteLine($"{Console.Title} 正在初始化...");
 
             var apolloConfig = new ApolloConfigBuilder()
-                .SetApolloServerUrl(new Uri("http://test.ecm.em/"))
+                .SetEnv("UAT")
+                .SetApolloServerUrl(new Uri("http://uat.ecm.em/"))
                 .SetAppIDs("pointcpf_supplier")
                 .Build();
 
@@ -25,9 +26,11 @@ namespace Wenli.Config.ApolloClient.Test
 
             ApolloServicePool.Init(apolloConfig);
 
-            Console.WriteLine($"{Console.Title} 已初始化，正在读取配置...");            
+            Console.WriteLine($"{Console.Title} 已初始化，正在读取配置...");
 
             var appIds = ApolloServicePool.GetAppIds(apolloConfig);
+
+            Console.WriteLine("appIds:" + appIds?.Length);
 
             while (true)
             {
@@ -52,7 +55,7 @@ namespace Wenli.Config.ApolloClient.Test
 
         private static void ApolloServicePool_OnError(Model.ApolloConfigException apolloConfigException)
         {
-            Console.WriteLine("error:" +Wenli.Config.ApolloClient.Newtonsoft.Json.JsonConvert.SerializeObject(apolloConfigException));
+            Console.WriteLine("error:" + Wenli.Config.ApolloClient.Newtonsoft.Json.JsonConvert.SerializeObject(apolloConfigException));
         }
     }
 }

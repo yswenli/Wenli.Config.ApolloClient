@@ -3,7 +3,7 @@
 *CLR 版本：4.0.30319.42000
 *机器名称：WENLI-PC
 *命名空间：Wenli.Config.ApolloClient.Base
-*类 名 称：GetConfigTask
+*类 名 称：ApolloServiceConfigTask
 *版 本 号：V1.0.0.0
 *创建人： yswenli
 *电子邮箱：wenguoli_520@qq.com
@@ -19,13 +19,14 @@ using Wenli.Config.ApolloClient.Common;
 using Wenli.Config.ApolloClient.Model;
 using System;
 using System.Threading;
+using System.Linq;
 
 namespace Wenli.Config.ApolloClient.Core
 {
     /// <summary>
     /// 获取配置任务
     /// </summary>
-    class GetConfigTask
+    class ApolloServiceConfigTask
     {
         HttpHelper _httpHelper;
 
@@ -37,7 +38,7 @@ namespace Wenli.Config.ApolloClient.Core
         /// 获取配置任务
         /// </summary>
         /// <param name="apolloConfig"></param>
-        public GetConfigTask(ApolloConfig apolloConfig)
+        public ApolloServiceConfigTask(ApolloConfig apolloConfig)
         {
             _apolloConfig = apolloConfig;
 
@@ -64,7 +65,7 @@ namespace Wenli.Config.ApolloClient.Core
 
                 if (data != null)
                 {
-                    if (data.Configurations != null && data.Configurations.Count > 0)
+                    if (data.Configurations != null && data.Configurations.Any())
                         ConfigCollection.Set(_apolloConfig.Env, data);
                     else
                         ConfigCollection.Remove(_apolloConfig.Env, data.Cluster, data.AppId);
@@ -95,8 +96,6 @@ namespace Wenli.Config.ApolloClient.Core
             for (int i = 0; i < _apolloConfig.MaxRetries; i++)
             {
                 var remoteConfig = _httpHelper.DoGet<RemoteConfig>(new HttpRequest($"{url}&rnd={Environment.TickCount}")).Body;
-
-                Thread.Sleep(500);//避免稍多的配置触发apollo服务器的拒绝服务
 
                 if (remoteConfig != null)
                 {

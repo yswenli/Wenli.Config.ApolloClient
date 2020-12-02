@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
+using System;
 
 namespace Wenli.Config.ApolloClient.Model
 {
@@ -61,9 +62,15 @@ namespace Wenli.Config.ApolloClient.Model
         {
             var dKey = GetKey(env, cluster, appID);
 
+            var now = DateTime.Now;
+
             while (!_cache.Any())
             {
                 Thread.Sleep(1000);
+
+                if (DateTime.Now - now > TimeSpan.FromSeconds(5))
+
+                    throw new ApolloNotFoundException("操作超时!");
             }
 
             if (_cache.TryGetValue(dKey, out RemoteConfig remoteConfig))

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Wenli.Config.ApolloClient.Model;
 
 namespace Wenli.Config.ApolloClient
 {
@@ -126,6 +127,18 @@ namespace Wenli.Config.ApolloClient
         /// <returns></returns>
         public ApolloConfig Build()
         {
+            if (string.IsNullOrEmpty(_apolloConfig.Env))
+            {
+                throw new ApolloConfigException("配置环境 ApolloConfig.Env 不能为空");
+            }
+            if (string.IsNullOrEmpty(_apolloConfig.ServerUrl))
+            {
+                throw new ApolloConfigException("配置环境 ApolloConfig.ServerUrl 不能为空");
+            }
+            if (string.IsNullOrEmpty(_apolloConfig.AppIDs))
+            {
+                throw new ApolloConfigException("配置环境 ApolloConfig.AppIDs 不能为空");
+            }
             return _apolloConfig;
         }
     }
