@@ -57,6 +57,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Wenli.Config.ApolloClient, Version=1.0.0.11, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Wenli.Config.ApolloClient.1.0.0.11\lib\netstandard2.0\Wenli.Config.ApolloClient.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -67,12 +70,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Wenli.Config.ApolloClient\Wenli.Config.ApolloClient.csproj">
-      <Project>{c1e97dd5-791e-4ebb-90de-39a24713b644}</Project>
-      <Name>Wenli.Config.ApolloClient</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -15,14 +15,13 @@
 *版 本 号： V1.0.0.0
 *描    述：
 *****************************************************************************/
-using Wenli.Config.ApolloClient.Common;
-using Wenli.Config.ApolloClient.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Wenli.Config.ApolloClient.Common;
+using Wenli.Config.ApolloClient.Model;
 
 namespace Wenli.Config.ApolloClient.Core
 {
@@ -228,7 +227,18 @@ namespace Wenli.Config.ApolloClient.Core
                 sb.AppendLine($"{GetSpace(2)}/// </summary>");
                 sb.AppendLine($"{GetSpace(2)}static ApolloServiceConfig()");
                 sb.AppendLine($"{GetSpace(2)}{{");
-                sb.AppendLine($"{GetSpace(3)}_apolloServicePool = ApolloServicePool.Create(apolloConfig);");
+                sb.AppendLine($"{GetSpace(3)}var config = new ApolloConfigBuilder()");
+                sb.AppendLine($"{GetSpace(5)}.SetApolloServerUrl(new Uri(\"http://127.0.0.1\"))");
+                sb.AppendLine($"{GetSpace(5)}.SetAppIDs(\"test\")");
+                sb.AppendLine($"{GetSpace(5)}.SetEnv(\"UAT\")");
+                sb.AppendLine($"{GetSpace(5)}.Build();");
+                sb.AppendLine($"{GetSpace(3)}_apolloServicePool = ApolloServicePool.Create(config);");
+                sb.AppendLine($"{GetSpace(3)}_apolloServicePool.OnError += _apolloServicePool_OnError;");
+                sb.AppendLine($"{GetSpace(2)}}}");
+
+                sb.AppendLine($"{GetSpace(2)}private static void _apolloServicePool_OnError(Model.ApolloConfigException apolloConfigException)");
+                sb.AppendLine($"{GetSpace(2)}{{");
+                sb.AppendLine($"{GetSpace(3)}Console.WriteLine(\"_apolloServicePool_OnError: \" + apolloConfigException.Message);");
                 sb.AppendLine($"{GetSpace(2)}}}");
 
                 foreach (var appID in appIDs)
