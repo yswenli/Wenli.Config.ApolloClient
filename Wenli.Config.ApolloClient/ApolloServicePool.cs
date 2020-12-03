@@ -26,37 +26,74 @@ namespace Wenli.Config.ApolloClient
     /// <summary>
     /// ApolloService缓存
     /// </summary>
-    public static class ApolloServicePool
+    public sealed class ApolloServicePool
     {
-        static ConcurrentDictionary<string, ApolloService> _cache = new ConcurrentDictionary<string, ApolloService>();
+        ConcurrentDictionary<string, ApolloService> _cache;
 
         /// <summary>
         /// apollo组件异常事件通知
         /// </summary>
-        public static event OnErrorHandler OnError;
+        public event OnErrorHandler OnError;
+        
 
         /// <summary>
-        /// 初始化
+        /// ApolloService缓存
         /// </summary>
-        /// <param name="apolloConfig"></param>
-        public static void Init(ApolloConfig apolloConfig)
+        /// <param name="apolloConfigs"></param>
+        internal ApolloServicePool(params ApolloConfig[] apolloConfigs)
         {
             try
             {
-                var uniqueId = apolloConfig.ServerUrl + apolloConfig.AppIDs;
+                if (apolloConfigs == null) throw new Exception("传入的apolloConfigs 不能为空!");
 
-                if (!_cache.ContainsKey(uniqueId))
+                _cache = new ConcurrentDictionary<string, ApolloService>();
+
+                foreach (var apolloConfig in apolloConfigs)
                 {
-                    var service = new ApolloService(apolloConfig);
-                    service.OnError += Service_OnError;
-                    service.Start();
-                    _cache.TryAdd(uniqueId, service);
+                    var uniqueId = apolloConfig.ServerUrl + apolloConfig.AppIDs;
+
+                    if (!_cache.ContainsKey(uniqueId))
+                    {
+                        var service = new ApolloService(apolloConfig);
+                        service.OnError += Service_OnError;
+                        service.Start();
+                        _cache.TryAdd(uniqueId, service);
+                    }
                 }
+
+                
             }
             catch (Exception ex)
             {
                 throw new ApolloConfigException($"ApolloServicePool 初始化失败,ex:{ex.Message}");
             }
+        }
+
+        #region static
+
+        static ApolloServicePool _apolloServicePool = null;
+
+        static object _locker = new object();
+
+        /// <summary>
+        /// 创建单例ApolloServicePool实例
+        /// </summary>
+        /// <param name="apolloConfigs"></param>
+        /// <returns></returns>
+        public static ApolloServicePool Create(params ApolloConfig[] apolloConfigs)
+        {
+            if (_apolloServicePool == null)
+            {
+                lock (_locker)
+                {
+                    if (_apolloServicePool == null)
+                    {
+                        _apolloServicePool = new ApolloServicePool(apolloConfigs);
+                    }
+                }
+            }
+
+            return _apolloServicePool;
         }
 
 
@@ -73,12 +110,17 @@ namespace Wenli.Config.ApolloClient
             return ApolloService.GenerateClass(apolloConfig, nameSpace, filePath, out err);
         }
 
+        #endregion
+
+
+
+
         /// <summary>
         /// 获取AppIds
         /// </summary>
         /// <param name="apolloConfig"></param>
         /// <returns></returns>
-        public static string[] GetAppIds(ApolloConfig apolloConfig)
+        public string[] GetAppIds(ApolloConfig apolloConfig)
         {
             return _cache[apolloConfig.ServerUrl + apolloConfig.AppIDs].GetAppIds();
         }
@@ -89,7 +131,7 @@ namespace Wenli.Config.ApolloClient
         /// <param name="apolloConfig"></param>
         /// <param name="appID"></param>
         /// <returns></returns>
-        public static string[] GetConfigKeys(ApolloConfig apolloConfig, string appID)
+        public string[] GetConfigKeys(ApolloConfig apolloConfig, string appID)
         {
             return _cache[apolloConfig.ServerUrl + apolloConfig.AppIDs][appID].Keys.ToArray();
         }
@@ -101,7 +143,7 @@ namespace Wenli.Config.ApolloClient
         /// <param name="appid"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static string GetConfig(string uniqueId, string appid, string key)
+        public string GetConfig(string uniqueId, string appid, string key)
         {
             if (_cache[uniqueId][appid].TryGetValue(key, out string value))
             {
@@ -117,7 +159,7 @@ namespace Wenli.Config.ApolloClient
         /// <param name="appid"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static string GetConfig(ApolloConfig apolloConfig, string appid, string key)
+        public string GetConfig(ApolloConfig apolloConfig, string appid, string key)
         {
             return GetConfig(apolloConfig.ServerUrl + apolloConfig.AppIDs, appid, key);
         }
@@ -132,7 +174,7 @@ namespace Wenli.Config.ApolloClient
         /// <param name="apolloConfig"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public static T GetConfig<T>(string uniqueId, string appid, string key)
+        public T GetConfig<T>(string uniqueId, string appid, string key)
         {
             string val;
 
@@ -155,7 +197,7 @@ namespace Wenli.Config.ApolloClient
         /// <param name="key"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public static T GetConfig<T>(ApolloConfig apolloConfig, string appid, string key, T defaultValue)
+        public T GetConfig<T>(ApolloConfig apolloConfig, string appid, string key, T defaultValue)
         {
             var val = GetConfig(apolloConfig, appid, key);
 
@@ -168,13 +210,13 @@ namespace Wenli.Config.ApolloClient
         }
 
 
-        private static void Service_OnError(ApolloConfigException apolloConfigException)
+        private void Service_OnError(ApolloConfigException apolloConfigException)
         {
             OnError?.Invoke(apolloConfigException);
         }
 
 
-        private static T ConvertValue<T>(string val)
+        private T ConvertValue<T>(string val)
         {
             try
             {
@@ -191,8 +233,5 @@ namespace Wenli.Config.ApolloClient
             }
             return default(T);
         }
-
-
-
     }
 }

@@ -215,15 +215,24 @@ namespace Wenli.Config.ApolloClient.Core
                 sb.AppendLine("namespace " + nameSpace);
                 sb.AppendLine("{");
 
+                sb.AppendLine($"{GetSpace(1)}/// <summary>");
+                sb.AppendLine($"{GetSpace(1)}/// ApolloServiceConfig");
+                sb.AppendLine($"{GetSpace(1)}/// </summary>");
+                sb.AppendLine($"{GetSpace(1)}public static class ApolloServiceConfig");
+                sb.AppendLine($"{GetSpace(1)}{{");
+
+                sb.AppendLine($"{GetSpace(2)}static ApolloServicePool _apolloServicePool;");
+
+                sb.AppendLine($"{GetSpace(2)}/// <summary>");
+                sb.AppendLine($"{GetSpace(2)}/// ApolloServiceConfig");
+                sb.AppendLine($"{GetSpace(2)}/// </summary>");
+                sb.AppendLine($"{GetSpace(2)}static ApolloServiceConfig()");
+                sb.AppendLine($"{GetSpace(2)}{{");
+                sb.AppendLine($"{GetSpace(3)}_apolloServicePool = ApolloServicePool.Create(apolloConfig);");
+                sb.AppendLine($"{GetSpace(2)}}}");
+
                 foreach (var appID in appIDs)
                 {
-                    sb.AppendLine($"{GetSpace(1)}/// <summary>");
-                    sb.AppendLine($"{GetSpace(1)}/// ApolloService{appID.ToTitleCaseWithOutSpecial()} ,");
-                    sb.AppendLine($"{GetSpace(1)}/// AppID:{appID}");
-                    sb.AppendLine($"{GetSpace(1)}/// </summary>");
-                    sb.AppendLine($"{GetSpace(1)}public static class ApolloService{appID.ToTitleCaseWithOutSpecial()}");
-                    sb.AppendLine($"{GetSpace(1)}{{");
-
                     var data = apolloService[appID];
 
                     if (data != null)
@@ -244,15 +253,14 @@ namespace Wenli.Config.ApolloClient.Core
                             sb.AppendLine($"{GetSpace(2)}{{");
                             sb.AppendLine($"{GetSpace(3)}get");
                             sb.AppendLine($"{GetSpace(3)}{{");
-                            sb.AppendLine($"{GetSpace(4)}return ApolloServicePool.GetConfig(\"{apolloConfig.ServerUrl + apolloConfig.AppIDs}\",\"{appID}\",\"{item}\");");
+                            sb.AppendLine($"{GetSpace(4)}return _apolloServicePool.GetConfig(\"{apolloConfig.ServerUrl + apolloConfig.AppIDs}\",\"{appID}\",\"{item}\");");
                             sb.AppendLine($"{GetSpace(3)}}}");
                             sb.AppendLine($"{GetSpace(2)}}}");
                         }
-                    }
-
-                    sb.AppendLine($"{GetSpace(1)}}}");
-                    sb.AppendLine("\r\n\r\n");
+                    }                   
                 }
+                sb.AppendLine($"{GetSpace(1)}}}");
+                sb.AppendLine("\r\n\r\n");
 
                 sb.AppendLine("}");
 
