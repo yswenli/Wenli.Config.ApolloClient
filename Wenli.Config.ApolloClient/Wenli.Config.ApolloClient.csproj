@@ -35,6 +35,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>ApolloClient,Apollo,Config</PackageTags>
     <Copyright>yswenli</Copyright>
+    <Version>1.0.0.11</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -40,13 +40,13 @@ namespace Wenli.Config.ApolloClient.Test
                 .SetAppIDs("myfirstweb")
                 .Build();
 
-            ApolloServicePool.OnError += ApolloServicePool_OnError;
+            var apolloServicePool = ApolloServicePool.Create(apolloConfig);
 
-            ApolloServicePool.Init(apolloConfig);
+            apolloServicePool.OnError += ApolloServicePool_OnError;
 
             Console.WriteLine($"{Console.Title} 已初始化，正在读取配置...");
 
-            var appIds = ApolloServicePool.GetAppIds(apolloConfig);
+            var appIds = apolloServicePool.GetAppIds(apolloConfig);
 
             Console.WriteLine("appIds:" + appIds?.Length);
 
@@ -54,11 +54,11 @@ namespace Wenli.Config.ApolloClient.Test
             {
                 foreach (var appId in appIds)
                 {
-                    var keys = ApolloServicePool.GetConfigKeys(apolloConfig, appId);
+                    var keys = apolloServicePool.GetConfigKeys(apolloConfig, appId);
 
                     foreach (var key in keys)
                     {
-                        Console.WriteLine($"appId:{appId},key:{key} value:{ApolloServicePool.GetConfig(apolloConfig, appId, key)}");
+                        Console.WriteLine($"appId:{appId},key:{key} value:{apolloServicePool.GetConfig(apolloConfig, appId, key)}");
                     }
                 }
 
