@@ -42,6 +42,8 @@ namespace Wenli.Config.ApolloClient.Core
 
         long _notificationId = -1;
 
+        public event OnErrorHandler OnError;
+
         /// <summary>
         /// 长轮询通知任务
         /// </summary>
@@ -75,7 +77,7 @@ namespace Wenli.Config.ApolloClient.Core
                     {
                         GetApolloConfigs(appIDs, cluster);
 
-                        Thread.Sleep(10);
+                        Thread.Yield();
                     }
 
                 }, TaskCreationOptions.LongRunning);
@@ -83,58 +85,63 @@ namespace Wenli.Config.ApolloClient.Core
         }
 
         /// <summary>
-        /// 启动长轮询
+        /// 获取阻塞式的配置数据
         /// </summary>
         /// <param name="appIDs"></param>
         /// <param name="cluster"></param>
         void GetApolloConfigs(string[] appIDs, string cluster = "default")
         {
-            List<Task> tasks = new List<Task>();
+            var tasks = new List<Task>();
 
             foreach (var serviceConfig in _serviceConfigs)
             {
-                foreach (var appID in appIDs)
+                var task = Task.Run(() =>
                 {
-                    var url = TaskUrlHelper.GetLongPollingUrl(serviceConfig.HomePageUrl, appID, cluster, _notificationId);
-
-                    var task = Task.Factory.StartNew(() =>
+                    try
                     {
-                        for (int i = 0; i < _apolloConfig.MaxRetries; i++)
+                        foreach (var appID in appIDs)
                         {
-                            var response = _httpHelper.DoGet<LongPollings>(new HttpRequest(url, 600 * 1000));
+                            var url = TaskUrlHelper.GetLongPollingUrl(serviceConfig.HomePageUrl, appID, cluster, _notificationId);
 
-                            if (response.StatusCode == 200 && response.Body != null)
+                            for (int i = 0; i < _apolloConfig.MaxRetries; i++)
                             {
-                                _getConfigTask.GetConfig(appIDs, serviceConfig, out cluster);
+                                var response = _httpHelper.DoGet<LongPollings>(new HttpRequest(url, 600 * 1000));
 
-                                var res = response.Body.FirstOrDefault();
-
-                                if (res != null)
+                                if (response.StatusCode == 200 && response.Body != null)
                                 {
-                                    _notificationId = res.NotificationId;
-                                }
+                                    _getConfigTask.GetConfig(appIDs, serviceConfig, cluster);
 
-                                break;
-                            }
-                            else if (response.StatusCode == 304)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine($"apollo轮询配置中心出现异常，response.StatusCode:{response.StatusCode}");
-                                throw new ApolloConfigException($"apollo轮询配置中心出现异常，response.StatusCode:{response.StatusCode}");
+                                    var res = response.Body.FirstOrDefault();
+
+                                    if (res != null)
+                                    {
+                                        _notificationId = res.NotificationId;
+                                    }
+
+                                    break;
+                                }
+                                else if (response.StatusCode == 304)
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    throw new ApolloConfigException($"url:{url},response.StatusCode:{response.StatusCode}");
+                                }
                             }
                         }
-                    });
 
-                    tasks.Add(task);
-                }
+                    }
+                    catch (Exception ex)
+                    {
+                        OnError?.Invoke(new ApolloConfigException("apollo轮询配置中心出现异常", ex));
+                        Thread.Sleep(10 * 1000);
+                    }
+                });
+
+                tasks.Add(task);
             }
-
-            if (tasks.Count > 0)
-
-                Task.WaitAll(tasks.ToArray());
+            Task.WaitAll(tasks.ToArray());
         }
 
         /// <summary>

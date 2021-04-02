@@ -145,15 +145,16 @@ namespace Wenli.Config.ApolloClient.Core
 
                         foreach (var serviceConfig in serviceConfigs)
                         {
-                            _apolloServiceConfigTask.GetConfig(_appIDs, serviceConfig, out _cluster);
+                            _apolloServiceConfigTask.GetConfig(_appIDs, serviceConfig, _cluster);
                         }
                     }
                     else
                     {
-                        throw new Exception("Wenli.Config.ApolloClient _configConfirmTask.GetServices 获取配置服务 is Null or Empty!");
+                        throw new Exception("获取配置服务 is Null or Empty!");
                     }
 
                     _longPollingTask = new LongPollingTask(Config, serviceConfigs);
+                    _longPollingTask.OnError += _longPollingTask_OnError;
 
                     _longPollingTask.Start(_appIDs, _cluster);
                 }
@@ -166,6 +167,11 @@ namespace Wenli.Config.ApolloClient.Core
 
                 Start();
             }
+        }
+
+        private void _longPollingTask_OnError(ApolloConfigException apolloConfigException)
+        {
+            OnError?.Invoke(apolloConfigException);
         }
 
         /// <summary>

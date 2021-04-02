@@ -8,7 +8,7 @@ namespace Wenli.Config.ApolloClient.Common
     /// </summary>
     public static class TaskUrlHelper
     {
-        static readonly string localIP = NetHelper.GetLocalIP();
+        static readonly string _localIP = NetHelper.GetLocalIP();
 
 
         /// <summary>
@@ -22,9 +22,9 @@ namespace Wenli.Config.ApolloClient.Common
 
             var query = HttpUtility.ParseQueryString(string.Empty);
 
-            if (!string.IsNullOrEmpty(localIP))
+            if (!string.IsNullOrEmpty(_localIP))
             {
-                query["ip"] = localIP;
+                query["ip"] = _localIP;
             }
 
             uriBuilder.Query = query.ToString();
@@ -45,9 +45,9 @@ namespace Wenli.Config.ApolloClient.Common
 
             var query = HttpUtility.ParseQueryString(string.Empty);
 
-            if (!string.IsNullOrEmpty(localIP))
+            if (!string.IsNullOrEmpty(_localIP))
             {
-                query["ip"] = localIP;
+                query["ip"] = _localIP;
             }
 
             uriBuilder.Query = query.ToString();
@@ -74,9 +74,9 @@ namespace Wenli.Config.ApolloClient.Common
 
             query["notifications"] = "[{\"namespaceName\":\"application\",\"notificationId\":"+ notificationId + "}]";
 
-            if (!string.IsNullOrEmpty(localIP))
+            if (!string.IsNullOrEmpty(_localIP))
             {
-                query["ip"] = localIP;
+                query["ip"] = _localIP;
             }
 
             uriBuilder.Query = query.ToString();

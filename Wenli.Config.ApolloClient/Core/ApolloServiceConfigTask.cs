@@ -53,15 +53,13 @@ namespace Wenli.Config.ApolloClient.Core
         /// <param name="appIDs"></param>
         /// <param name="service"></param>
         /// <param name="cluster"></param>
-        public void GetConfig(string[] appIDs, ServiceConfig service, out string cluster)
+        public void GetConfig(string[] appIDs, ServiceConfig service, string cluster = "default")
         {
-            cluster = "default";
-
             RemoteConfigs remoteConfigs = new RemoteConfigs();
 
-            foreach (var item in appIDs)
+            foreach (var appID in appIDs)
             {
-                var data = GetConfig(service.HomePageUrl, item, _apolloConfig.Env);
+                var data = GetConfigFromServer(service.HomePageUrl, appID, _apolloConfig.Env);
 
                 if (data != null)
                 {
@@ -79,17 +77,21 @@ namespace Wenli.Config.ApolloClient.Core
                         FileHelper.Write(fileName, data);
                     }
                 }
+                else
+                {
+                    data = GetConfigFromLocal(appID, cluster);
+                }
             }
         }
 
         /// <summary>
-        /// 获取配置任务
+        /// 获取配置
         /// </summary>
         /// <param name="serverUrl"></param>
         /// <param name="appID"></param>
         /// <param name="env"></param>
         /// <returns></returns>
-        public RemoteConfig GetConfig(string serverUrl, string appID, string env)
+        public RemoteConfig GetConfigFromServer(string serverUrl, string appID, string env)
         {
             var url = TaskUrlHelper.GetConfigUrl(serverUrl, appID, env);
 
@@ -103,6 +105,18 @@ namespace Wenli.Config.ApolloClient.Core
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 获取本地配置
+        /// </summary>
+        /// <param name="appID"></param>
+        /// <param name="cluster"></param>
+        /// <returns></returns>
+        public RemoteConfig GetConfigFromLocal(string appID, string cluster = "default")
+        {
+            var fileName = FileHelper.GetCacheName(_cachePath, _apolloConfig.Env, cluster, appID);
+            return FileHelper.Read<RemoteConfig>(fileName);
         }
     }
 }

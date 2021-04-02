@@ -17,7 +17,7 @@ namespace Wenli.Config.ApolloClient.Test
             Console.WriteLine($"{Console.Title} 正在初始化...");
 
             var apolloConfig = new ApolloConfigBuilder()
-                .SetEnv("UAT")
+                .SetEnv("TEST")
                 .SetApolloServerUrl(new Uri("http://127.0.0.1:8080/"))
                 .SetAppIDs("myfirstweb")
                 .Build();
